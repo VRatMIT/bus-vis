@@ -1,31 +1,26 @@
 import * as T from 'three';
+import { loft, surface, labelMaterial } from './sculpt.js';
+import { materials } from './materials.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 // Metres. X runs from the Ford nose (-X) to the rear; Y is up.
 export function createBus(){
  const bus=new T.Group(); bus.name='2016 Ford E-450 · painted exterior';
- const paint=new T.MeshPhysicalMaterial({color:0x095168,metalness:.62,roughness:.22,clearcoat:1,clearcoatRoughness:.12});
- const rubber=new T.MeshStandardMaterial({color:0x161b1d,roughness:.83});
- const trim=new T.MeshStandardMaterial({color:0x202c30,metalness:.3,roughness:.33});
- const chrome=new T.MeshStandardMaterial({color:0xc9d1d4,metalness:.96,roughness:.19});
- const glass=new T.MeshPhysicalMaterial({color:0x10242c,metalness:.45,roughness:.14,clearcoat:1});
- const light=new T.MeshPhysicalMaterial({color:0xe4edf1,metalness:.25,roughness:.2,clearcoat:1});
- const amber=new T.MeshStandardMaterial({color:0xec9b31,emissive:0xae5410,emissiveIntensity:.2,roughness:.25});
- const red=new T.MeshPhysicalMaterial({color:0x9f2025,roughness:.24,clearcoat:1});
+ const {paint,rubber,trim,chrome,glass,light,amber,red}=materials();
  function mesh(g,m,x=0,y=0,z=0){const o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;bus.add(o);return o;}
  function box(w,h,d,x,y,z,m=paint,r=.025){
   if(d<.08&&w>.25&&h>.2){const s=new T.Shape(),a=-w/2,b=-h/2,q=Math.min(r,w/3,h/3);s.moveTo(a+q,b);s.lineTo(a+w-q,b);s.quadraticCurveTo(a+w,b,a+w,b+q);s.lineTo(a+w,b+h-q);s.quadraticCurveTo(a+w,b+h,a+w-q,b+h);s.lineTo(a+q,b+h);s.quadraticCurveTo(a,b+h,a,b+h-q);s.lineTo(a,b+q);s.quadraticCurveTo(a,b,a+q,b);const g=new T.ExtrudeGeometry(s,{depth:d,bevelEnabled:false,curveSegments:10});g.translate(0,0,-d/2);return mesh(g,m,x,y,z);}
   if(Math.min(w,h,d)<.025)return mesh(new T.BoxGeometry(w,h,d),m,x,y,z);
-  return mesh(new RoundedBoxGeometry(w,h,d,3,Math.min(r,w/3,h/3,d/3)),m,x,y,z);
+  return mesh(new RoundedBoxGeometry(w,h,d,6,Math.min(r,w/3,h/3,d/3)),m,x,y,z);
  }
  function profile(points,depth,z,m=paint,bevel=.025){const s=new T.Shape();points.forEach(([x,y],i)=>i?s.lineTo(x,y):s.moveTo(x,y));s.closePath();return mesh(new T.ExtrudeGeometry(s,{depth,bevelEnabled:bevel>0,bevelSegments:3,steps:1,bevelSize:bevel,bevelThickness:bevel,curveSegments:32}),m,0,0,z);}
  function line(points,m=trim,r=.012){return mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p))),Math.max(2,points.length*8),r,8,false),m);}
  function cyl(radius,depth,x,y,z,m=chrome){const o=mesh(new T.CylinderGeometry(radius,radius,depth,48),m,x,y,z);o.rotation.x=Math.PI/2;return o;}
  // Full-width upper coach, rounded roof, and the characteristic over-cab brow.
  box(5.58,1.64,2.43,1.12,2.05,0,paint,.13);
- box(5.67,.23,2.44,1.09,2.91,0,paint,.11);
- profile([[-2.85,2.47],[-2.94,2.7],[-2.89,2.94],[-2.7,3.01],[-1.45,3.01],[-1.43,2.37],[-2.28,2.37]],2.37,-1.185,paint,.065);
+ mesh(loft([[-1.74,1.13,2.72,2.985],[-1.57,1.225,2.72,3.035],[.2,1.225,2.72,3.05],[2.9,1.225,2.72,3.05],[3.72,1.205,2.73,3.015],[3.925,1.11,2.77,2.94]],.48),paint);
+ mesh(loft([[-3.085,1.025,2.54,2.86],[-3.025,1.15,2.46,2.95],[-2.88,1.22,2.39,3.015],[-2.47,1.225,2.37,3.04],[-1.74,1.225,2.41,3.035],[-1.57,1.225,2.52,3.035]],.45),paint);
  // Lower side panels have actual wheel openings, not tires hidden in a box.
  for(const side of [-1,1]){
   const s=new T.Shape();s.moveTo(-1.66,.53);s.lineTo(1.42,.53);s.lineTo(1.42,.57);s.absarc(2.02,.57,.60,Math.PI,0,true);s.lineTo(2.62,.53);s.lineTo(3.9,.53);s.lineTo(3.9,1.4);s.lineTo(-1.66,1.4);s.closePath();
@@ -54,30 +49,42 @@ export function createBus(){
   box(.2,.39,.15,-2.48,1.93,side*1.43,trim,.065);box(.018,.31,.11,-2.369,1.94,side*1.43,chrome,.014);
   box(.22,.065,.018,-2.97,1.53,side*1.061,chrome,.007);
  }
- box(1.19,.36,1.92,-3.32,1.31,0,paint,.1);
- const hood=box(1.15,.095,1.91,-3.32,1.533,0,paint,.044);hood.rotation.z=.1;
+ mesh(loft([[-3.965,.88,1.235,1.48],[-3.87,.969,1.20,1.54],[-3.49,1.005,1.22,1.60],[-2.99,1.015,1.28,1.675],[-2.78,.963,1.36,1.69]],.48,56),paint);
+ for(const side of [-1,1]){
+  line([[-3.89,1.492,side*.72],[-3.55,1.583,side*.75],[-3.16,1.654,side*.77],[-2.84,1.68,side*.79]],trim,.004);
+  // Broad flared fender lip blends into the pressed cab panel.
+  mesh(surface((u,v)=>{const a=.03+u*(Math.PI-.06),rad=.565+v*.12;return [-2.95+Math.cos(a)*rad,.56+Math.sin(a)*rad,side*(1.017+.055*Math.sin(v*Math.PI))];},64,10),paint).material.side=T.DoubleSide;
+ }
  box(.13,.64,1.97,-3.88,1.04,0,paint,.045);
  // Windshield is a single raked surface spanning the cab.
- const windshield=box(.055,.82,1.82,-2.57,1.966,0,trim,.023);windshield.rotation.z=-.72;
- const windglass=box(.023,.727,1.73,-2.6,1.965,0,glass,.011);windglass.rotation.z=-.72;
+ const screen=(u,v,offset=0)=>{const z=(u*2-1)*(.94-v*.065);return [-2.925+v*.665+.074*Math.pow(z/.94,2)+offset,1.652+v*.642,z];};
+ mesh(surface((u,v)=>screen(u,v),48,28),trim);
+ mesh(surface((u,v)=>screen(.024+u*.952,.034+v*.932,-.014),48,28),glass);
  box(.71,.12,1.99,-1.99,2.29,0,paint,.05);
- for(const z of [-.48,.4])line([[-2.861,1.695,z-.19],[-2.87,1.721,z],[-2.807,1.795,z+.34]],trim,.01);
+ for(const z of [-.44,.4]){line([[-2.91,1.685,z-.18],[-2.869,1.74,z],[-2.86,1.755,z+.31]],trim,.011);line([[-2.875,1.752,z-.1],[-2.861,1.763,z+.35]],rubber,.015);}
+ box(.17,.035,1.7,-2.83,1.67,0,trim,.012);
+ for(let i=0;i<36;i++)box(.1,.01,.013,-2.835,1.69,-.77+i*.044,rubber,.003);
  // Ford's rectangular chrome grille and stacked headlamp assemblies.
  box(.075,.65,1.23,-3.969,1.14,0,chrome,.045);box(.024,.54,1.1,-4.011,1.14,0,trim,.03);
  for(let i=0;i<7;i++)box(.02,.015,1.05,-4.03,.923+i*.071,0,chrome,.004);
  for(const y of [.92,1.34])box(.032,.034,1.12,-4.045,y,0,chrome,.006);
  const badge=cyl(.073,.018,-4.069,1.16,0,new T.MeshStandardMaterial({color:0x0b3550,metalness:.4,roughness:.25}));badge.rotation.set(0,0,Math.PI/2);badge.scale.z=1.9;
  for(const side of [-1,1]){box(.06,.54,.35,-3.979,1.13,side*.82,chrome,.035);box(.021,.2,.29,-4.015,1.27,side*.82,light,.02);box(.023,.085,.28,-4.018,1.115,side*.82,amber,.013);box(.02,.145,.29,-4.016,.985,side*.82,light,.018);for(let i=0;i<4;i++)box(.024,.005,.265,-4.03,1.22+i*.032,side*.82,chrome,.001);}
- box(.21,.18,2.08,-3.96,.722,0,chrome,.055);box(.16,.15,1.94,-3.955,.558,0,trim,.025);
+ mesh(loft([[-4.095,.89,.64,.82],[-4.055,1.01,.62,.84],[-3.95,1.055,.63,.84],[-3.82,1.035,.65,.81]],.48,24),chrome);box(.16,.15,1.94,-3.955,.558,0,trim,.025);
  box(.025,.15,.31,-4.079,.693,0,light,.009);
  // Wheels, dual rear tires, steel hubs, circular vents and eight lugs.
  for(const x of [-2.95,2.02])for(const side of [-1,1]){
   const z=side*(x<0?1.005:1.115); cyl(.551,.035,x,.55,z-side*.17,rubber);
   const tire=mesh(new T.TorusGeometry(.351,.125,20,64),rubber,x,.481,z);tire.scale.z=1.2;
   if(x>0)mesh(new T.TorusGeometry(.351,.125,16,64),rubber,x,.481,z-side*.25);
-  cyl(.279,.18,x,.481,z,chrome);cyl(.221,.185,x,.481,z,trim);cyl(.184,.204,x,.481,z,chrome);cyl(.095,.235,x,.481,z,chrome);
+  cyl(.277,.17,x,.481,z,trim);
+  const rimProfile=[[.092,.035],[.11,.049],[.17,.044],[.225,.083],[.249,.105],[.265,.113],[.278,.103],[.281,.088]].map(p=>new T.Vector2(...p));
+  const rim=mesh(new T.LatheGeometry(rimProfile.reverse(),72),chrome,x,.481,z);rim.rotation.x=side*Math.PI/2;
+  for(const radius of [.272,.252]){const lip=mesh(new T.TorusGeometry(radius,.008,8,72),chrome,x,.481,z+side*.101);}
+  cyl(.098,.224,x,.481,z,chrome);const hub=mesh(new T.SphereGeometry(.094,32,16),chrome,x,.481,z+side*.115);hub.scale.z=.55;
   for(let i=0;i<8;i++){const a=i*Math.PI/4;cyl(.033,.012,x+Math.sin(a)*.22,.481+Math.cos(a)*.22,z+side*.098,trim);cyl(.018,.017,x+Math.sin(a)*.127,.481+Math.cos(a)*.127,z+side*.118,chrome);}
-  for(let i=0;i<52;i++){const a=i*Math.PI*2/52;const t=box(.028,.006,.19,x+Math.sin(a)*.475,.481+Math.cos(a)*.475,z,rubber,.002);t.rotation.z=-a;}
+  for(let i=0;i<64;i++){const a=i*Math.PI*2/64;for(const lane of [-1,1]){const t=box(.034,.009,.07,x+Math.sin(a)*.476,.481+Math.cos(a)*.476,z+lane*.052,rubber,.002);t.rotation.z=-a;t.rotation.y=lane*.2;}}
+  for(const radius of [.322,.427])mesh(new T.TorusGeometry(radius,.0028,6,72),rubber,x,.481,z+side*.121);
   box(.28,.24,.025,x+.48,.34,side*1.07,rubber,.01);
  }
  // Passenger lift doors and destination panel, matched to the walkaround video.
@@ -96,12 +103,33 @@ export function createBus(){
  for(const side of [-1,1]){rearWindow(2.2,side*.825,.55,.91);for(const z of [.75,.98]){const o=cyl(.079,.028,3.985,.91,side*z,red);o.rotation.set(0,0,Math.PI/2);}const o=cyl(.084,.023,3.986,.68,side*.84,light);o.rotation.set(0,0,Math.PI/2);box(.06,.042,.13,3.944,2.75,side*.95,red,.012);}
  box(.05,.037,.14,4.009,1.46,-.34,chrome,.007);
  box(.16,.15,2.5,3.94,.48,0,trim,.03);
- for(const z of [-.32,0,.32]){box(.055,.04,.1,3.96,2.85,z,red,.013);box(.07,.04,.1,-2.966,2.86,z,amber,.014);}
- box(.045,.26,1.18,-3.016,2.718,0,trim,.03);box(.022,.2,1.05,-3.045,2.718,0,glass,.02);
+ for(const z of [-.32,0,.32]){box(.055,.04,.1,3.96,2.85,z,red,.013);box(.07,.04,.1,-3.09,2.86,z,amber,.014);}
+ box(.045,.26,1.18,-3.112,2.718,0,trim,.03);box(.022,.2,1.05,-3.14,2.718,0,glass,.02);
  box(1.06,.17,.85,2.37,3.09,0,paint,.075);box(.7,.028,.65,2.37,3.19,0,trim,.024);
  for(let i=0;i<9;i++)box(.045,.02,.59,2.08+i*.073,3.208,0,paint,.006);
  box(.54,.047,.54,.2,3.055,0,paint,.023);
  box(.16,.23,.025,2.93,.99,1.262,trim,.025);
+
+ // Fine exterior hardware remains readable when inspecting close-up.
+ for(const side of [-1,1]){
+  for(const x of [-1.52,3.72])for(const y of [.65,1.04,1.46,2.66])cyl(.009,.008,x,y,side*1.24,chrome);
+  for(const x of side===1?[-1.16,-.42,.32,1.06,1.8,2.54,3.28]:[1.06,1.8,2.54,3.28]){
+   box(.1,.027,.015,x+.2,2.34,side*1.286,trim,.004);
+   for(const dx of [-.28,.28])cyl(.006,.006,x+dx,1.67,side*1.288,chrome);
+  }
+  for(let i=0;i<7;i++)box(.48,.008,.009,-2.0,.497,side*(1.05+i*.02),rubber,.002);
+  const badge=mesh(new T.PlaneGeometry(.22,.044),labelMaterial('E450'),-2.97,1.535,side*1.074);if(side<0)badge.rotation.y=Math.PI;
+ }
+ for(const x of [-.615,.695])for(const y of [.92,1.57,2.43]){box(.042,.115,.035,x,y,-1.306,chrome,.012);box(.008,.083,.042,x,y,-1.326,trim,.003);}
+ for(const y of [1.0,1.74,2.48]){box(.06,.1,.045,4.012,y,.444,chrome,.013);}
+ // Round lenses have individual reflector elements behind their clear faces.
+ for(const side of [-1,1])for(const z of [.75,.98])for(let j=0;j<3;j++)for(let i=0;i<3;i++){const o=cyl(.01,.007,4.003,.884+j*.025,side*z+(i-1)*.025,red);o.rotation.set(0,0,Math.PI/2);}
+ const ford=mesh(new T.PlaneGeometry(.19,.068),labelMaterial('Ford',{italic:true}),-4.082,1.16,0);ford.rotation.y=-Math.PI/2;
+ for(const side of [-1,1]){line([[-3.94,.54,side*.59],[-3.97,.49,side*.59],[-4.01,.49,side*.59]],trim,.022);}
+ // Roof vent flange, fasteners, weather seals, and rear bumper ribs.
+ for(const x of [1.88,2.86])for(const z of [-.36,.36]){const screw=cyl(.012,.008,x,3.105,z,chrome);screw.rotation.x=0;}
+ for(const y of [.445,.49,.535])box(.012,.008,2.38,4.025,y,0,rubber,.002);
+
  // Static parts share a draw call per material for smooth orbiting on mobile.
  const batches=new Map();for(const part of [...bus.children]){part.updateMatrix();const g=(part.geometry.index?part.geometry.toNonIndexed():part.geometry.clone()).applyMatrix4(part.matrix);if(!batches.has(part.material))batches.set(part.material,[]);batches.get(part.material).push(g);part.geometry.dispose();bus.remove(part);}
  for(const [material,parts] of batches){const merged=mergeGeometries(parts);const part=new T.Mesh(merged,material);part.castShadow=true;part.receiveShadow=true;bus.add(part);parts.forEach(g=>g.dispose());}
