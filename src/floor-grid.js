@@ -76,7 +76,7 @@ export function createFloorGrid() {
       const parabola = Math.max(0, 1 - Math.pow(delta / width, 2));
       height += (2.2 + 0.8 * Math.sin(peak * 2.3) + 0.5 * Math.cos(peak * 0.9)) * parabola * parabola;
     }
-    positions.setZ(i, radial * radial * height);
+    positions.setZ(i, radial * radial * height * 0.72);
   }
   geometry.computeVertexNormals();
   const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
