@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { studioEnvironment } from './materials.js';
 import { createBus } from './bus.js';
 import { createFloorGrid } from './floor-grid.js';
+import { createPanelViewer } from './panel-viewer.js';
 
 try {
 const host=document.querySelector('#scene');
@@ -28,8 +29,10 @@ document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>selectView(b.d
 document.querySelector('#reset').onclick=()=>{controls.autoRotate=false;document.querySelector('#rotate').setAttribute('aria-pressed','false');selectView('hero');};
 document.querySelector('#rotate').onclick=e=>{controls.autoRotate=!controls.autoRotate;transition=null;e.currentTarget.setAttribute('aria-pressed',String(controls.autoRotate));};
 controls.addEventListener('start',()=>{transition=null;document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));});
-window.addEventListener('resize',()=>{camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();renderer.setSize(host.clientWidth,host.clientHeight);});
-const clock=new THREE.Clock();renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.1);if(transition){const t=Math.min((performance.now()-transition.time)/950,1);const s=t*t*(3-2*t);camera.position.lerpVectors(transition.from,transition.to,s);controls.target.lerpVectors(transition.target,new THREE.Vector3(0,innerWidth<760?2.1:1.25,0),s);if(t===1)transition=null;}controls.update(dt);floorGrid.update(clock.elapsedTime);renderer.render(scene,camera);renderer.shadowMap.autoUpdate=false;});
+const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);};
+window.addEventListener('resize',resize);
+const panelViewer=createPanelViewer({scene,camera,controls,renderer,bus,floor,floorGrid,resize,cancelTransition:()=>{transition=null;}});
+const clock=new THREE.Clock();renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.1);if(!panelViewer.render3D)return;if(transition){const t=Math.min((performance.now()-transition.time)/950,1);const s=t*t*(3-2*t);camera.position.lerpVectors(transition.from,transition.to,s);controls.target.lerpVectors(transition.target,new THREE.Vector3(0,innerWidth<760?2.1:1.25,0),s);if(t===1)transition=null;}controls.update(dt);floorGrid.update(clock.elapsedTime);renderer.render(scene,camera);renderer.shadowMap.autoUpdate=false;});
 document.querySelector('#loading').remove();
-window.__busStudio={scene,camera,controls,renderer,bus,floorGrid};
+window.__busStudio={scene,camera,controls,renderer,bus,floorGrid,panelViewer};
 } catch(error){document.querySelector('#loading')?.remove();document.querySelector('#error').hidden=false;console.error(error);}
