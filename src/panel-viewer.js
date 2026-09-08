@@ -21,6 +21,7 @@ export function createPanelViewer({scene,camera,controls,renderer,bus,floor,floo
   for(const p of panel?[panel]:PANELS){
    const [x,y]=panel?[padding,padding]:p.at;const g=svgElement('g',{transform:`translate(${x} ${y})`,'data-panel':p.id});
    const path=svgElement('path',{d:pathData(p),'fill-rule':'evenodd',fill:exporting?'none':'#182a2b',stroke:exporting?'#111111':'#8aaca7','stroke-width':exporting?.004:.009,'stroke-linejoin':'round','data-panel-path':p.id});
+   if(!panel&&p.sheetFlip)path.setAttribute('transform',`translate(0 ${p.h}) scale(1 -1)`);
    const title=svgElement('title');title.textContent=`${p.name} — ${dimensions(p)}`;path.append(title);g.append(path);
    if(!exporting){g.setAttribute('tabindex','0');g.setAttribute('role','button');g.setAttribute('aria-label',`${p.name}, ${dimensions(p)}. Open panel.`);
     g.addEventListener('pointerenter',()=>{status.textContent=`${p.name} · ${dimensions(p)}`;});g.addEventListener('focus',()=>{status.textContent=`${p.name} · ${dimensions(p)}`;});
@@ -46,6 +47,10 @@ export function createPanelViewer({scene,camera,controls,renderer,bus,floor,floo
  function close(){if(!open)return;open=false;clearHighlight();root.hidden=true;document.body.classList.remove('panel-mode','panel-detail');toggle.setAttribute('aria-expanded','false');camera.position.copy(saved.position);controls.target.copy(saved.target);controls.autoRotate=saved.auto;controls.minDistance=saved.min;controls.maxDistance=saved.max;floor.visible=true;floorGrid.mesh.visible=true;floorGrid.terrain.visible=true;controls.update();resize();toggle.focus();}
  toggle.onclick=show;root.querySelector('#panel-close').onclick=close;root.querySelector('#panel-back').onclick=overview;
  root.querySelector('#panel-export').onclick=()=>{const svg=draw(selected,true);const description=svgElement('desc');description.textContent='Approximate bus-model panel projections in millimetres. Verify dimensions and curved-surface allowances on the vehicle before printing or cutting.';svg.prepend(description);const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));const a=document.createElement('a');a.href=url;a.download=selected?`bus-panel-${selected.id}.svg`:'bus-panel-sheet.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
- document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'){selected?overview():close();}});
+ document.addEventListener('keydown',e=>{
+  if(!open)return;
+  if(e.key==='Escape'){selected?overview():close();}
+  if(e.key==='Tab'){const focusable=[...root.querySelectorAll('button:not([hidden]),g[tabindex]')];const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+ });
  return {get active(){return open;},get selected(){return selected;},get render3D(){return !open||!!selected;},select,close,show};
 }

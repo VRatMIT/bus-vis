@@ -21,7 +21,7 @@ const passengerOuter=archOutline(5.56,2.25,3.68,.6);
 const passengerHoles=[...windows([1.06,1.8,2.54,3.28],-1.66,2.78),rect(.135,.295,.73,1.93),rect(1.005,.05,1.37,2.12),rounded(2.44,-.035,1.34,.2,.04)];
 // Destination panel is an edge cut, represented by a notch instead of an out-of-bounds hole.
 passengerHoles.pop();
-passengerOuter.splice(1,0,[2.44,0],[2.44,.165],[3.78,.165],[3.78,0]);
+passengerOuter.splice(1,0,[2.44,0],[2.44,.13],[3.78,.13],[3.78,0]);
 add('passenger-coach','Entry side · coach shell',5.56,2.25,[sideX,entryY],sideMap(-1.66,2.78,-1.285),passengerOuter,passengerHoles,'passenger');
 for(const [n,x] of [[1,-1.34],[2,-.98]])add('entry-'+n,'Entry door · '+(n===1?'front leaf':'rear leaf'),.321,1.78,[sideX+x-.1605+1.66,entryY+2.78-2.44],sideMap(x-.1605,2.44,-1.321),undefined,[rounded(.0265,.035,.268,1.25,.035)],'passenger');
 for(const [n,x] of [[1,-.31],[2,.37]])add('lift-'+n,'Lift door · '+(n===1?'front leaf':'rear leaf'),.653,2.065,[sideX+x-.3265+1.66,entryY+.0775],sideMap(x-.3265,2.7025,-1.338),undefined,[rounded(.1065,.1925,.44,.82,.085)],'passenger');
@@ -48,6 +48,8 @@ add('brow-front','Over-cab cap · front',2.05,.32,[3.7,9.76],(u,v)=>[-3.157,2.86
 add('brow-roof','Over-cab cap · top',1.425,2.43,[3.7,10.14],(u,v)=>[-3.085+u,3.065,v-1.215],rounded(0,0,1.425,2.43,.13),[],'top','Projected cap surface; its compound curves need stretch allowances.');
 for(const [side,x] of [[1,.3],[-1,1.85]])add('brow-'+(side===1?'driver':'passenger'),'Over-cab cap · '+(side===1?'driver side':'entry side'),1.425,.64,[x,12.66],sideMap(-3.085,3.025,side*1.25),rounded(0,0,1.425,.64,.13),[],side===1?'hero':'passenger','Projected curved cap side.');
 add('front-header','Front grille surround',1.97,.64,[3.5,12.66],(u,v)=>[-4.065,1.36-v,u-.985],undefined,[rect(.37,0,1.23,.565),rect(0,0,.35,.5),rect(1.62,0,.35,.5)],'front','Painted front surround; grille and lamps excluded.');
+// Turn the driver elevation outward so its roof seam adjoins the roof in the net.
+for(const panel of panels.slice(0,4)){panel.sheetFlip=true;panel.at[1]=driverY+2.25-(panel.at[1]-driverY)-panel.h;}
 export const PANELS=panels;
 export const SHEET={width:6.35,height:13.58};
 export function pathData(panel){return [panel.outer,...panel.holes].map(p=>'M'+p.map(([x,y])=>`${x.toFixed(4)},${y.toFixed(4)}`).join('L')+'Z').join('');}
