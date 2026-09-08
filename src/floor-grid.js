@@ -60,7 +60,32 @@ export function createFloorGrid() {
       }
     `,
   });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), material);
+  // A flat central clearing blends into an irregular, softly parabolic ridge.
+  const geometry = new THREE.PlaneGeometry(200, 200, 320, 320);
+  const positions = geometry.attributes.position;
+  for (let i = 0; i < positions.count; i++) {
+    const x = positions.getX(i), z = positions.getY(i);
+    const radius = Math.hypot(x, z), angle = Math.atan2(z, x);
+    const ridge = 30 + 2.2 * Math.sin(angle * 3 + 0.7) + 1.1 * Math.cos(angle * 5);
+    const radial = Math.max(0, 1 - Math.pow((radius - ridge) / 7.5, 2));
+    let height = 0.45;
+    for (let peak = 0; peak < 15; peak++) {
+      const center = peak * Math.PI * 2 / 15 + 0.065 * Math.sin(peak * 2.7);
+      const delta = Math.atan2(Math.sin(angle - center), Math.cos(angle - center));
+      const width = 0.19 + 0.035 * Math.sin(peak * 1.9);
+      const parabola = Math.max(0, 1 - Math.pow(delta / width, 2));
+      height += (2.2 + 0.8 * Math.sin(peak * 2.3) + 0.5 * Math.cos(peak * 0.9)) * parabola * parabola;
+    }
+    positions.setZ(i, radial * radial * height);
+  }
+  geometry.computeVertexNormals();
+  const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+    color: 0x11191c, roughness: 1, metalness: 0, envMapIntensity: 0.3,
+  }));
+  terrain.name = 'Distant parabolic mountain ring';
+  terrain.rotation.x = -Math.PI / 2;
+  terrain.position.y = -0.008;
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'Cyan polar floor grid';
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = 0.002;
@@ -68,5 +93,5 @@ export function createFloorGrid() {
   const setMotion = () => { material.uniforms.uMotion.value = preference.matches ? 0 : 1; };
   setMotion();
   preference.addEventListener('change', setMotion);
-  return { mesh, update: (time) => { material.uniforms.uTime.value = time; } };
+  return { mesh, terrain, update: (time) => { material.uniforms.uTime.value = time; } };
 }
