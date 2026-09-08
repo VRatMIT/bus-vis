@@ -31,7 +31,7 @@ export function createBus(){
   const s=new T.Shape();s.moveTo(-1.66,.53);s.lineTo(1.42,.53);s.lineTo(1.42,.57);s.absarc(2.02,.57,.60,Math.PI,0,true);s.lineTo(2.62,.53);s.lineTo(3.9,.53);s.lineTo(3.9,1.4);s.lineTo(-1.66,1.4);s.closePath();
   mesh(new T.ExtrudeGeometry(s,{depth:.075,bevelEnabled:true,bevelSize:.014,bevelThickness:.014,bevelSegments:3,curveSegments:40}),paint,0,0,side>0?1.14:-1.215);
   const arc=[];for(let i=0;i<=48;i++){const a=Math.PI-i*Math.PI/48;arc.push([2.02+.615*Math.cos(a),.57+.615*Math.sin(a),side*1.235]);}line(arc,paint,.035);
-  box(5.48,.037,.035,1.12,.87,side*1.247,trim,.008);
+  box(3.08,.037,.035,-.08,.87,side*1.247,trim,.008);box(1.23,.037,.035,3.245,.87,side*1.247,trim,.008);
   box(5.48,.026,.03,1.12,2.79,side*1.233,paint,.01);
   // Seven sash windows on driver's side, six behind the passenger entrance.
   const centers=side===1?[-1.16,-.42,.32,1.06,1.8,2.54,3.28]:[1.06,1.8,2.54,3.28];
@@ -91,7 +91,7 @@ export function createBus(){
  box(.67,.055,.2,-1.16,.5,-1.28,chrome,.014);
  box(.08,.86,2.4,3.891,.92,0,paint,.035);
  box(.045,2.05,.92,3.948,1.67,0,trim,.025);box(.025,1.995,.86,3.978,1.67,0,paint,.018);
- function rearWindow(y,z,w,h){const a=box(w,h,.045,0,0,0,trim,.075);a.rotation.y=Math.PI/2;a.position.set(4.002,y,z);const b=box(w-.065,h-.065,.026,0,0,0,glass,.06);b.rotation.y=Math.PI/2;b.position.set(4.032,y,z);}
+ function rearWindow(y,z,w,h){const a=box(w,h,.045,0,0,0,trim,.075);a.rotation.y=Math.PI/2;a.position.set(3.958,y,z);const b=box(w-.065,h-.065,.026,0,0,0,glass,.06);b.rotation.y=Math.PI/2;b.position.set(3.985,y,z);}
  rearWindow(2.17,0,.74,.75);rearWindow(1.14,0,.73,.34);
  for(const side of [-1,1]){rearWindow(2.2,side*.825,.55,.91);for(const z of [.75,.98]){const o=cyl(.079,.028,3.985,.91,side*z,red);o.rotation.set(0,0,Math.PI/2);}const o=cyl(.084,.023,3.986,.68,side*.84,light);o.rotation.set(0,0,Math.PI/2);box(.06,.042,.13,3.944,2.75,side*.95,red,.012);}
  box(.05,.037,.14,4.009,1.46,-.34,chrome,.007);
