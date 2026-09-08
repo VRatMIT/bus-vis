@@ -1,8 +1,14 @@
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
+import { ShapeUtils, Vector2, Vector3 } from 'three';
 import { PANELS, highlightGeometry, SHEET } from './src/panels.js';
 for(const panel of PANELS){
- const g=highlightGeometry(panel);assert.ok(g.attributes.position.count>0,panel.id+' has geometry');assert.ok([...g.attributes.position.array].every(Number.isFinite),panel.id+' has finite coordinates');g.dispose();
+ const g=highlightGeometry(panel);assert.ok(g.attributes.position.count>0,panel.id+' has geometry');assert.ok([...g.attributes.position.array].every(Number.isFinite),panel.id+' has finite coordinates');const pos=g.attributes.position,indices=g.index.array;let area3D=0;
+ for(let i=0;i<indices.length;i+=3){const a=new Vector3().fromBufferAttribute(pos,indices[i]),b=new Vector3().fromBufferAttribute(pos,indices[i+1]),c=new Vector3().fromBufferAttribute(pos,indices[i+2]);area3D+=b.sub(a).cross(c.sub(a)).length()/2;}
+ const area=contour=>Math.abs(ShapeUtils.area(contour.map(p=>new Vector2(...p))));
+ const origin=new Vector3(...panel.map(0,0)),u=new Vector3(...panel.map(1,0)).sub(origin),v=new Vector3(...panel.map(0,1)).sub(origin);
+ const expectedArea=(area(panel.outer)-panel.holes.reduce((sum,h)=>sum+area(h),0))*u.cross(v).length();
+ assert.ok(Math.abs(area3D-expectedArea)<.00002,panel.id+' cutouts match its 3D highlight');g.dispose();
  assert.ok(panel.at[0]>=0&&panel.at[1]>=0&&panel.at[0]+panel.w<=SHEET.width&&panel.at[1]+panel.h<=SHEET.height,panel.id+' fits sheet');
 }
 const browser=await chromium.launch({executablePath:'/home/mehek/.cache/ms-playwright/chromium-1134/chrome-linux/chrome',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader'],env:{...process.env,LD_LIBRARY_PATH:'/tmp/chrome-deps/root/usr/lib/x86_64-linux-gnu'}});

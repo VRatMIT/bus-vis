@@ -31,7 +31,7 @@ for(const [side,at] of [[1,.3],[-1,3.82]]){
  const prefix=side===1?'driver':'passenger',view=side===1?'hero':'passenger';
  const doorOuter=[[.59,0],[1.23,0],[1.23,1.76],[.56,1.76],[.56,1.16],[.18,.70],[0,.68]];
  add(prefix+'-cab-door',(side===1?'Driver':'Passenger')+' cab door',1.23,1.76,[at+1.02,cabY],sideMap(-2.89,2.32,side*1.075),doorOuter,[[[.2,.65],[.66,.09],[1.10,.09],[1.10,.65]]],view,'Door outline follows the cab silhouette; verify curved edge allowances.');
- const fender=[[0,.20],[1.03,0],[1.52,.55],[1.52,1.09],[1.525,1.09]];
+ const fender=[[0,.20],[1.03,0],[1.525,.55],[1.525,1.09]];
  for(let i=0;i<=40;i++){const a=i*Math.PI/40;fender.push([.96+.565*Math.cos(a),1.09-.565*Math.sin(a)]);}fender.push([0,1.09]);
  add(prefix+'-fender',(side===1?'Driver':'Passenger')+' front fender',1.525,1.09,[at,cabY+.67],sideMap(-3.91,1.65,side*1.10),fender,[],view,'Projected curved fender; not a flat-cut template.');
 }
@@ -47,7 +47,7 @@ add('rear-door','Rear emergency door',.86,1.995,[rearAt[0]+.785,rearAt[1]+.1125]
 add('brow-front','Over-cab cap · front',2.05,.32,[3.7,9.76],(u,v)=>[-3.157,2.86-v,u-1.025],rounded(0,0,2.05,.32,.09),[rounded(.435,.012,1.18,.26,.03)],'front','Projected curved cap; destination display excluded.');
 add('brow-roof','Over-cab cap · top',1.425,2.43,[3.7,10.14],(u,v)=>[-3.085+u,3.065,v-1.215],rounded(0,0,1.425,2.43,.13),[],'top','Projected cap surface; its compound curves need stretch allowances.');
 for(const [side,x] of [[1,.3],[-1,1.85]])add('brow-'+(side===1?'driver':'passenger'),'Over-cab cap · '+(side===1?'driver side':'entry side'),1.425,.64,[x,12.66],sideMap(-3.085,3.025,side*1.25),rounded(0,0,1.425,.64,.13),[],side===1?'hero':'passenger','Projected curved cap side.');
-add('front-header','Front grille surround',1.97,.64,[3.5,12.66],(u,v)=>[-4.065,1.36-v,u-.985],undefined,[rect(.37,0,1.23,.565),rect(0,0,.35,.5),rect(1.62,0,.35,.5)],'front','Painted front surround; grille and lamps excluded.');
+add('front-header','Front grille surround',1.97,.64,[3.5,12.66],(u,v)=>[-4.065,1.36-v,u-.985],[[0,.5],[.35,.5],[.35,0],[.37,0],[.37,.565],[1.6,.565],[1.6,0],[1.62,0],[1.62,.5],[1.97,.5],[1.97,.64],[0,.64]],[],'front','Painted front surround; grille and lamps excluded.');
 // Turn the driver elevation outward so its roof seam adjoins the roof in the net.
 for(const panel of panels.slice(0,4)){panel.sheetFlip=true;panel.at[1]=driverY+2.25-(panel.at[1]-driverY)-panel.h;}
 export const PANELS=panels;
