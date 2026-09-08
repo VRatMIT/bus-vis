@@ -48,8 +48,24 @@ add('brow-front','Over-cab cap · front',2.05,.32,[3.7,9.76],(u,v)=>[-3.157,2.86
 add('brow-roof','Over-cab cap · top',1.425,2.43,[3.7,10.14],(u,v)=>[-3.085+u,3.065,v-1.215],rounded(0,0,1.425,2.43,.13),[],'top','Projected cap surface; its compound curves need stretch allowances.');
 for(const [side,x] of [[1,.3],[-1,1.85]])add('brow-'+(side===1?'driver':'passenger'),'Over-cab cap · '+(side===1?'driver side':'entry side'),1.425,.64,[x,12.66],sideMap(-3.085,3.025,side*1.25),rounded(0,0,1.425,.64,.13),[],side===1?'hero':'passenger','Projected curved cap side.');
 add('front-header','Front grille surround',1.97,.64,[3.5,12.66],(u,v)=>[-4.065,1.36-v,u-.985],[[0,.5],[.35,.5],[.35,0],[.37,0],[.37,.565],[1.6,.565],[1.6,0],[1.62,0],[1.62,.5],[1.97,.5],[1.97,.64],[0,.64]],[],'front','Painted front surround; grille and lamps excluded.');
-// Turn the driver elevation outward so its roof seam adjoins the roof in the net.
-for(const panel of panels.slice(0,4)){panel.sheetFlip=true;panel.at[1]=driverY+2.25-(panel.at[1]-driverY)-panel.h;}
+// Templates face outward: reflect contours and their world map together so
+// the 2D orientation changes without moving the corresponding 3D highlight.
+function reflect(panel,axis){
+ const map=panel.map,flip=([u,v])=>axis==='x'?[panel.w-u,v]:[u,panel.h-v];
+ panel.outer=panel.outer.map(flip);panel.holes=panel.holes.map(h=>h.map(flip));
+ panel.map=(u,v)=>map(...flip([u,v]));
+}
+for(const panel of panels){
+ if(panel.view==='passenger'){
+  reflect(panel,'x');
+  // Mirror nested leaves with their shell, and the cab as one assembly.
+  const group=panel.id==='passenger-coach'||/^(entry|lift)-/.test(panel.id)?[sideX,5.56]:
+   /^passenger-(cab-door|fender)$/.test(panel.id)?[3.82,2.25]:null;
+  if(group)panel.at[0]=group[0]+group[1]-(panel.at[0]-group[0])-panel.w;
+ }
+ if(panel.view==='rear')reflect(panel,'x');
+ if(panel.id==='roof')reflect(panel,'y');
+}
 export const PANELS=panels;
 export const SHEET={width:6.35,height:13.58};
 export function pathData(panel){return [panel.outer,...panel.holes].map(p=>'M'+p.map(([x,y])=>`${x.toFixed(4)},${y.toFixed(4)}`).join('L')+'Z').join('');}

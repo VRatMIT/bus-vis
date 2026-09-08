@@ -11,6 +11,28 @@ for(const panel of PANELS){
  assert.ok(Math.abs(area3D-expectedArea)<.00002,panel.id+' cutouts match its 3D highlight');g.dispose();
  assert.ok(panel.at[0]>=0&&panel.at[1]>=0&&panel.at[0]+panel.w<=SHEET.width&&panel.at[1]+panel.h<=SHEET.height,panel.id+' fits sheet');
 }
+// Exterior views must read screen-right and down, including exported contours.
+for(const panel of PANELS){
+ const origin=new Vector3(...panel.map(0,0));
+ const right=new Vector3(...panel.map(1,0)).sub(origin);
+ const down=new Vector3(...panel.map(0,1)).sub(origin);
+ const axis=panel.view==='passenger'?new Vector3(-1,0,0):panel.view==='rear'?new Vector3(0,0,-1):panel.view==='front'?new Vector3(0,0,1):new Vector3(1,0,0);
+ assert.ok(right.dot(axis)>0,panel.id+' faces exterior screen-right');
+ assert.ok(panel.view==='top'||panel.id==='hood'?down.z>0:down.y<0,panel.id+' faces exterior screen-down');
+}
+const driver=PANELS.find(p=>p.id==='driver-fender'),passenger=PANELS.find(p=>p.id==='passenger-fender');
+driver.outer.forEach(([u,v],i)=>{
+ assert.ok(Math.abs(passenger.outer[i][0]-(driver.w-u))<1e-10,'fenders mirror horizontally');
+ assert.equal(passenger.outer[i][1],v);
+ const a=driver.map(u,v),b=passenger.map(...passenger.outer[i]);
+ assert.ok(Math.abs(a[0]-b[0])<1e-10&&a[1]===b[1]&&a[2]===-b[2],'fenders retain matching world placement');
+});
+const shell=PANELS.find(p=>p.id==='passenger-coach');
+for(const leaf of PANELS.filter(p=>/^(entry|lift)-/.test(p.id))){
+ const u=leaf.at[0]-shell.at[0],v=leaf.at[1]-shell.at[1];
+ const a=shell.map(u,v),b=leaf.map(0,0);
+ assert.ok(Math.abs(a[0]-b[0])<1e-10&&Math.abs(a[1]-b[1])<1e-10,leaf.id+' stays aligned in shell');
+}
 const browser=await chromium.launch({executablePath:'/home/mehek/.cache/ms-playwright/chromium-1134/chrome-linux/chrome',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader'],env:{...process.env,LD_LIBRARY_PATH:'/tmp/chrome-deps/root/usr/lib/x86_64-linux-gnu'}});
 const page=await browser.newPage({viewport:{width:1360,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(process.env.BUS_URL||'http://hmsharbor:5009');await page.waitForFunction(()=>window.__busStudio?.panelViewer);
@@ -23,7 +45,7 @@ assert.equal(await page.locator('#panel-drawing g[data-panel]').count(),1);
 assert.ok(await page.locator('#scene').isVisible());
 await page.screenshot({path:'/tmp/panels-driver.png'});
 await page.locator('#panel-back').click();
-for(const id of ['roof','passenger-coach','hood','rear-door','lift-1','driver-fender']){
+for(const id of ['roof','passenger-coach','hood','rear-door','lift-1','driver-fender','passenger-fender']){
  await page.locator(`[data-panel="${id}"]`).focus();await page.keyboard.press('Enter');
  assert.equal(await page.evaluate(()=>window.__busStudio.panelViewer.selected.id),id);
  assert.equal(await page.evaluate(()=>window.__busStudio.scene.children.filter(o=>o.name.startsWith('Selected panel:')).length),1);
