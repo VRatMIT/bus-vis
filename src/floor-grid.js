@@ -76,7 +76,18 @@ export function createFloorGrid() {
       const parabola = Math.max(0, 1 - Math.pow(delta / width, 2));
       height += (2.2 + 0.8 * Math.sin(peak * 2.3) + 0.5 * Math.cos(peak * 0.9)) * parabola * parabola;
     }
-    positions.setZ(i, radial * radial * height * 0.72);
+    // A second ridge sits beyond the first, with offset peaks visible through its valleys.
+    const backRidge = 47 + 2.8 * Math.sin(angle * 4 + 1.1) + 1.6 * Math.cos(angle * 7);
+    const backRadial = Math.max(0, 1 - Math.pow((radius - backRidge) / 9.0, 2));
+    let backHeight = 0.65;
+    for (let peak = 0; peak < 19; peak++) {
+      const center = peak * Math.PI * 2 / 19 + 0.15 + 0.045 * Math.sin(peak * 1.8);
+      const delta = Math.atan2(Math.sin(angle - center), Math.cos(angle - center));
+      const width = 0.16 + 0.04 * Math.cos(peak * 2.1);
+      const parabola = Math.max(0, 1 - Math.pow(delta / width, 2));
+      backHeight += (2.5 + 0.95 * Math.sin(peak * 1.7) + 0.55 * Math.cos(peak * 0.8)) * parabola * parabola;
+    }
+    positions.setZ(i, radial * radial * height * 0.72 + backRadial * backRadial * backHeight);
   }
   geometry.computeVertexNormals();
   const terrain = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
