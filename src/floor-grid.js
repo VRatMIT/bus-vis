@@ -10,15 +10,19 @@ export function createFloorGrid() {
     toneMapped: false,
     vertexShader: `
       varying vec2 vFloor;
+      varying float vDepth;
       void main() {
-        vFloor = uv * 11.4 - 5.7;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vFloor = uv * 200.0 - 100.0;
+        vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+        vDepth = -viewPosition.z;
+        gl_Position = projectionMatrix * viewPosition;
       }
     `,
     fragmentShader: `
       uniform float uTime;
       uniform float uMotion;
       varying vec2 vFloor;
+      varying float vDepth;
       const float TAU = 6.28318530718;
       void main() {
         float radius = length(vFloor);
@@ -26,21 +30,23 @@ export function createFloorGrid() {
         float ringDistance = abs(mod(radius + 0.275, 0.55) - 0.275);
         float sector = angle / TAU * 48.0;
         float spokeDistance = abs(fract(sector + 0.5) - 0.5) * radius * TAU / 48.0;
-        float edgeDistance = abs(radius - 5.5);
-        float wireDistance = min(min(ringDistance, spokeDistance), edgeDistance);
+        float wireDistance = min(ringDistance, spokeDistance);
         float aa = max(fwidth(radius), 0.002);
         float core = 1.0 - smoothstep(0.005, 0.005 + aa, wireDistance);
         float halo = exp(-wireDistance * wireDistance / 0.00065);
-        float mask = (1.0 - smoothstep(5.50, 5.57, radius)) * smoothstep(0.12, 0.4, radius);
+        // The floor continues beyond the camera's fog range; there is no circular rim.
+        float fogFade = 1.0 - smoothstep(14.0, 70.0, vDepth);
+        float detailFade = 1.0 - smoothstep(0.10, 0.38, aa);
+        float mask = fogFade * detailFade * smoothstep(0.12, 0.4, radius);
 
         // A soft surge moves outward on the spokes, then along each ring.
         // The quiet interval between surges keeps the floor unobtrusive.
-        float cycle = mod(uTime + 1.4, 9.0);
-        float front = (cycle - 1.0) * 1.65;
-        float envelope = smoothstep(0.75, 1.25, cycle) * (1.0 - smoothstep(4.15, 4.85, cycle));
+        float cycle = mod(uTime + 1.4, 12.0);
+        float front = (cycle - 1.0) * 6.0;
+        float envelope = smoothstep(0.75, 1.25, cycle) * (1.0 - smoothstep(8.5, 10.0, cycle));
         float wave = exp(-pow((radius - front) / 0.22, 2.0)) * envelope;
         float ringRadius = floor(radius / 0.55 + 0.5) * 0.55;
-        float sinceArrival = cycle - 1.0 - ringRadius / 1.65;
+        float sinceArrival = cycle - 1.0 - ringRadius / 6.0;
         float angleHead = sinceArrival * 2.7;
         float angularDistance = abs(mod(angle - angleHead + 3.14159265359, TAU) - 3.14159265359);
         float ringRun = exp(-angularDistance * angularDistance / 0.08)
@@ -54,7 +60,7 @@ export function createFloorGrid() {
       }
     `,
   });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(11.4, 11.4), material);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), material);
   mesh.name = 'Cyan polar floor grid';
   mesh.rotation.x = -Math.PI / 2;
   mesh.position.y = 0.002;
