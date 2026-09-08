@@ -6,7 +6,7 @@ export function materials(){
  // Very subtle surface microstructure beneath a smooth clear coat.
  const n=128,data=new Uint8Array(n*n*4);let seed=1976;for(let i=0;i<n*n;i++){seed=(1664525*seed+1013904223)>>>0;const v=124+(seed%9);data.set([v,v,255,255],i*4);}const normal=new T.DataTexture(data,n,n,T.RGBAFormat);normal.wrapS=normal.wrapT=T.RepeatWrapping;normal.repeat.set(90,90);normal.needsUpdate=true;
  return {
- paint:new T.MeshPhysicalMaterial({color:0x254f52,metalness:0,roughness:.3,clearcoat:1,clearcoatRoughness:.065,normalMap:normal,normalScale:new T.Vector2(.025,.025),envMapIntensity:1.15}),
+ paint:new T.MeshPhysicalMaterial({color:0x102e33,metalness:0,roughness:.19,clearcoat:1,clearcoatRoughness:.035,normalMap:normal,normalScale:new T.Vector2(.025,.025),envMapIntensity:1.15}),
  rubber:new T.MeshStandardMaterial({color:0x111416,roughness:.86,metalness:0}),
  trim:new T.MeshStandardMaterial({color:0x111b1e,metalness:.12,roughness:.48}),
  chrome:new T.MeshStandardMaterial({color:0xe2e6e7,metalness:1,roughness:.115,envMapIntensity:1.2}),
