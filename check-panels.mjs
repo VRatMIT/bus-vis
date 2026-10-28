@@ -33,7 +33,7 @@ for(const leaf of PANELS.filter(p=>/^(entry|lift)-/.test(p.id))){
  const a=shell.map(u,v),b=leaf.map(0,0);
  assert.ok(Math.abs(a[0]-b[0])<1e-10&&Math.abs(a[1]-b[1])<1e-10,leaf.id+' stays aligned in shell');
 }
-const browser=await chromium.launch({executablePath:'/home/mehek/.cache/ms-playwright/chromium-1134/chrome-linux/chrome',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader'],env:{...process.env,LD_LIBRARY_PATH:'/tmp/chrome-deps/root/usr/lib/x86_64-linux-gnu'}});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/home/mehek/.cache/ms-playwright/chromium-1148/chrome-linux/chrome',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader'],env:{...process.env,LD_LIBRARY_PATH:process.env.LD_LIBRARY_PATH||'/tmp/bus-browser-deps/usr/lib/x86_64-linux-gnu'}});
 const page=await browser.newPage({viewport:{width:1360,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(process.env.BUS_URL||'http://hmsharbor:5009');await page.waitForFunction(()=>window.__busStudio?.panelViewer);
 const original=await page.evaluate(()=>window.__busStudio.camera.position.toArray());
