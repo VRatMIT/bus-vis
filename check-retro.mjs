@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict';
-import { RETRO_DEFAULTS, normalizeRetro, subjectMask, filmGrain, solidGray, reticulation, halftonePattern, lighterColor, thresholdPixels, renderRetro } from './src/retro-print.js';
-const s=normalizeRetro(),w=96,h=96,data=new Uint8ClampedArray(w*h*4);
+import { RETRO_DEFAULTS, normalizeRetro, subjectMask, filmGrain, solidGray, reticulation, halftonePattern, lighterColor, thresholdPixels, gradientMap, renderRetro } from './src/retro-print.js';
+const s=normalizeRetro({paper:'white',printResolution:96}),w=96,h=96,data=new Uint8ClampedArray(w*h*4);
 for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;let v=255;if(x>=12&&x<84&&y>=12&&y<84)v=(x<16||x>=80||y<16||y>=80)?0:128;if(x>=36&&x<60&&y>=36&&y<60)v=255;data.set([v,v,v,255],i);}
 const at=(pixels,x,y)=>[...pixels.slice((y*w+x)*4,(y*w+x)*4+4)];
 const matte=subjectMask(data,w,h,s);assert.equal(matte.alpha[0],0);assert.equal(matte.alpha[45*w+45],255);assert.equal(matte.alpha[20*w+20],255);
 const output=renderRetro(data,w,h,s,{stages:true,maxPreviewEdge:96});assert.equal(at(output.pixels,0,0)[3],0);assert.deepEqual(at(output.pixels,45,45),[255,255,255,255]);
 const mono=renderRetro(data,w,h,{...s,mode:'mono'}).pixels;
-let ink=0,white=0;for(let i=0;i<mono.length;i+=4){if(!mono[i+3])continue;assert.ok(mono[i]===0||mono[i]===255);assert.equal(mono[i],mono[i+1]);assert.equal(mono[i],mono[i+2]);if(mono[i])white++;else ink++;}assert.ok(ink>500&&white>500);
-const colored=renderRetro(data,w,h,{...s,color:'#c64b92'}).pixels;for(let i=0;i<colored.length;i+=4){if(!colored[i+3])continue;assert.ok(colored[i]===255&&colored[i+1]===255&&colored[i+2]===255||colored[i]===198&&colored[i+1]===75&&colored[i+2]===146);}
+let ink=0,white=0,intermediate=0;for(let i=0;i<mono.length;i+=4){if(!mono[i+3])continue;assert.equal(mono[i],mono[i+1]);assert.equal(mono[i],mono[i+2]);if(mono[i]===255)white++;else ink++;if(mono[i]>0&&mono[i]<255)intermediate++;}assert.ok(ink>500&&white>100&&intermediate>100);
+const colored=renderRetro(data,w,h,{...s,color:'#c64b92'}).pixels;for(let i=0;i<colored.length;i+=4){if(!colored[i+3])continue;const t=(colored[i]-198)/57;assert.ok(Math.abs(colored[i+1]-(75+180*t))<3);assert.ok(Math.abs(colored[i+2]-(146+109*t))<2);}
+const tones=new Uint8ClampedArray([0,0,0,255,128,128,128,255,255,255,255,255]);
+assert.deepEqual([...gradientMap(tones,new Uint8ClampedArray([255,255,255]),{...s,color:'#000080',paperColor:'#ff8000'})],[0,0,128,255,128,64,64,255,255,128,0,255]);
+const knockout=gradientMap(tones,new Uint8ClampedArray([255,128,255]),{...s,color:'#27247d',paper:'transparent'});assert.equal(knockout[3],255);assert.equal(knockout[7],64);assert.equal(knockout[11],0);
 assert.deepEqual([...lighterColor(new Uint8ClampedArray([255,0,0,255,200,100,50,255]),new Uint8Array([100,100]),.6)],[162,60,60,255,200,100,50,255]);
 assert.deepEqual([...thresholdPixels(new Uint8ClampedArray([160,160,160,255,161,161,161,255]),161)],[0,0,0,255,255,255,255,255]);
 const blackBlend=lighterColor(new Uint8ClampedArray([0,0,0,255]),new Uint8Array([255]),.6);assert.equal(blackBlend[0],153);assert.equal(thresholdPixels(blackBlend,161)[0],0);
@@ -21,4 +24,7 @@ const cutout=new Uint8ClampedArray(data);for(let i=0;i<w;i++)cutout[i*4+3]=0;cut
 const raw=renderRetro(data,w,h,{...s,enabled:false});assert.equal(at(raw.pixels,0,0)[3],0);assert.deepEqual(at(raw.pixels,45,45),[255,255,255,255]);
 assert.equal(renderRetro(data,w,h,{...s,removeBackground:false}).pixels[3],255);assert.equal(at(renderRetro(data,w,h,{...s,paper:'transparent'}).pixels,45,45)[3],0);
 assert.deepEqual(renderRetro(data,w,h,s).pixels,output.pixels,'Noise must stay fixed while artwork moves or is cropped');
-console.log(JSON.stringify({reticulation:'35/15/3',grain:'100/25/50',halftone:'dot 2/12',galleryOrder:'passed',lighterColor:'whole RGB, 60%',threshold:161,whiteDetail:'preserved',background:'removed',alpha:'preserved',deterministic:true,ink,white}));
+const pink=new Uint8ClampedArray(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++)pink.set(x>=12&&x<84&&y>=12&&y<84?[225,225,225,255]:[239,214,220,255],(y*w+x)*4);const pinkMatte=subjectMask(pink,w,h,s);assert.equal(pinkMatte.alpha[0],0);assert.equal(pinkMatte.alpha[12*w+12],255,'Silver must not be mistaken for similarly bright pink');assert.equal(pinkMatte.alpha[40*w+40],255);
+const metal=new Uint8ClampedArray(w*h*4);for(let i=0;i<w*h;i++)metal.set([216,216,216,255],i*4);const print=renderRetro(metal,w,h,{...s,paper:'transparent',removeBackground:false,printResolution:2400}).pixels;let coverage=0;for(let i=3;i<print.length;i+=4)coverage+=print[i]/255;coverage/=w*h;assert.ok(coverage>.27&&coverage<.43,'Silver head retains reference-level ink density');
+assert.equal(RETRO_DEFAULTS.color,'#27247d');assert.equal(RETRO_DEFAULTS.paper,'transparent');
+console.log(JSON.stringify({reticulation:'35/15/3',grain:'100/25/50',halftone:'dot 2/12',galleryOrder:'passed',lighterColor:'whole RGB, 60%',threshold:161,gradientMap:'continuous two-stop',silverOnPink:'preserved',whiteDetail:'preserved',background:'removed',alpha:'preserved',referenceHeadCoverage:coverage,deterministic:true,ink,white,intermediate}));
