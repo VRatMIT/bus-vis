@@ -52,7 +52,7 @@ function surfaceGeometry(panel,bus){
 }
 
 export function createDesignPreview(host){
- const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;host.append(renderer.domElement);
+ const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,stencil:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;host.append(renderer.domElement);
  const scene=new T.Scene();scene.background=new T.Color('#172122');
  const pmrem=new T.PMREMGenerator(renderer),env=studioEnvironment(),envMap=pmrem.fromScene(env,.025).texture;scene.environment=envMap;pmrem.dispose();env.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
  const camera=new T.PerspectiveCamera(36,1,.1,100);camera.position.set(-10,5,12);
@@ -67,18 +67,21 @@ export function createDesignPreview(host){
  renderer.setAnimationLoop(()=>{if(!active||document.hidden)return;controls.update();renderer.render(scene,camera);});
  return {
   scene,camera,renderer,decals,
-  focus(panel){camera.position.set(...views[panel.view]);controls.target.set(0,1.5,0);fit();if(outline){scene.remove(outline);outline.geometry.dispose();outline.material.dispose();}
-   let geometry=geometries.get(panel.id);if(!geometry){geometry=surfaceGeometry(panel,bus);geometries.set(panel.id,geometry);}
-   outline=new T.LineSegments(new T.EdgesGeometry(geometry,60),new T.LineBasicMaterial({color:0xc4f7a0,transparent:true,opacity:.45,depthTest:true}));outline.renderOrder=4;scene.add(outline);
+  focus(panel,connected=[panel]){camera.position.set(...views[panel.view]);controls.target.set(0,1.5,0);fit();if(outline){scene.remove(outline);outline.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
+   outline=new T.Group();outline.name='Connected panel outlines';
+   for(const p of connected){let geometry=geometries.get(p.id);if(!geometry){geometry=surfaceGeometry(p,bus);geometries.set(p.id,geometry);}
+    const line=new T.LineSegments(new T.EdgesGeometry(geometry,60),new T.LineBasicMaterial({color:p.id===panel.id?0xc4f7a0:0x88b4a3,transparent:true,opacity:p.id===panel.id?.6:.24,depthTest:true}));line.renderOrder=4;outline.add(line);
+   }scene.add(outline);
   },
   update(panel,canvas){
    let mesh=decals.get(panel.id);
    if(!mesh){
     let geometry=geometries.get(panel.id);if(!geometry){geometry=surfaceGeometry(panel,bus);geometries.set(panel.id,geometry);}
     const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
-    mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({map:texture,transparent:true,alphaTest:.025,roughness:.38,metalness:0,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,depthWrite:false}));mesh.name='Design: '+panel.id;mesh.renderOrder=3;scene.add(mesh);decals.set(panel.id,mesh);
+    mesh=new T.Mesh(geometry,new T.MeshStandardMaterial({map:texture,transparent:true,alphaTest:.025,roughness:.38,metalness:0,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,depthWrite:false,stencilWrite:true,stencilRef:1,stencilFunc:T.NotEqualStencilFunc,stencilZPass:T.ReplaceStencilOp}));mesh.name='Design: '+panel.id;mesh.renderOrder=3;scene.add(mesh);decals.set(panel.id,mesh);
    }else{mesh.material.map.image=canvas;mesh.material.map.needsUpdate=true;}
   },
+  remove(id){const mesh=decals.get(id);if(!mesh)return;scene.remove(mesh);mesh.material.map.dispose();mesh.material.dispose();decals.delete(id);},
   clear(){for(const mesh of decals.values()){scene.remove(mesh);mesh.material.map.dispose();mesh.material.dispose();}decals.clear();},
   screenshot(){renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png');},
   pause(){active=false;},resume(){active=true;resize();},
