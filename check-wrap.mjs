@@ -11,7 +11,7 @@ for(const [id,x] of [['driver-skirt-front',0],['driver-wheel-arch',3.08],['drive
 }
 same(localToWrap(p('driver-skirt-front'),3.08,.4),localToWrap(p('driver-wheel-arch'),0,.4));
 same(localToWrap(p('driver-wheel-arch'),1.2,.4),localToWrap(p('driver-skirt-rear'),0,.4));
-same(localToWrap(p('brow-roof'),1.425,1),localToWrap(p('roof'),0,1));
+same(localToWrap(p('brow-roof'),p('brow-roof').w,1),localToWrap(p('roof'),0,1));
 // Entry/lift leaves occupy their real openings, not arbitrary thumbnail slots.
 for(const id of ['entry-1','entry-2','lift-1','lift-2']){
  const a=placement(id),b=placement('passenger-coach'),world=p(id).map(0,0),local=p('passenger-coach').map(a.x-b.x,a.y-b.y);near(world[0],local[0]);near(world[1],local[1]);

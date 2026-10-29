@@ -4,7 +4,7 @@ An interactive Three.js exterior study of the painted 2016 Ford E-450 shuttle bu
 
 The dark viewer displays only a compact vehicle stats panel and camera controls. The paint is a digital approximation of Porsche Fjord Green, modeled as a solid gloss finish with no metallic component. Reference: https://www.carpaints.co/paints/detail/fjord-green (including its photographic swatch); Porsche Classic also lists Fjord Green in its 1960–1961 colour archive. Display and lighting affect perceived color.
 
-The model includes a smoothly lofted roof cap and hood, a bowed windshield, flared wheel arches, dual rear tires with detailed wheel dishes, passenger entry and lift doors, rear emergency glazing, lens reflectors, hinges, fasteners, badges, and weather seals. Layered teal paint, tinted glass, chrome, and rubber use separate physical materials with a procedural studio reflection environment.
+The model includes a continuous rounded-rectangle fiberglass roof and over-cab shell, a broad destination-display face, a sloping crowned hood with a leading-edge deflector, a bowed windshield, flared wheel arches, supported commercial mirrors, dual rear tires with flatter sidewalls and detailed wheel dishes, passenger entry and lift doors, rear emergency glazing, lens reflectors, hinges, fasteners, badges, and weather seals. The shell, hood, mirrors, and tires follow the supplied white/blue bus photograph while retaining the existing Fjord Green finish. Layered teal paint, tinted glass, chrome, and rubber use separate physical materials with a procedural studio reflection environment.
 
 Drag to orbit, scroll or pinch to zoom, and right-drag or use two fingers to pan. Presets cover the driver side, entry side, rear, and roof. Automatic orbit and camera reset are available. Dimensions and details not fully visible in the references are approximate; this is a visual model, not a fabrication drawing.
 
@@ -28,7 +28,7 @@ The local deployment uses `deploy/bus-vis.service` to serve the production build
 
 Repository: `VRatMIT/bus-vis`. The included GitHub Actions workflow deploys the static build to `https://vratmit.github.io/bus-vis/`. This is a project site: it does not modify the separate `vratmit.github.io` repository or its homepage. The `hmsharbor:5009` production service remains available.
 
-Reference photographs and video files remain local and are excluded from Git. Geometry is authored in `src/bus.js` and `src/sculpt.js`; physical materials and reflection lighting are in `src/materials.js`. No model downloads or external 3D services are needed at runtime.
+Reference photographs and video files remain local and are excluded from Git. Geometry is authored in `src/bus.js` and `src/sculpt.js`; `src/body-profile.js` shares cap dimensions with the artwork templates. Physical materials and reflection lighting are in `src/materials.js`. No model downloads or external 3D services are needed at runtime. Run `npm run test:geometry` to check the shell's bounds, outward normals, continuous roof, and cap artwork alignment.
 
 ## Panel Studio
 

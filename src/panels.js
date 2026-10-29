@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CAP } from './body-profile.js';
 
 // Planning geometry in metres, referenced to the same X/Y/Z dimensions as bus.js.
 // Curved caps and hood are projected templates, not developable fabrication patterns.
@@ -44,10 +45,11 @@ for(const z of [-.98,-.75,.75,.98])rearHoles.push(rounded(z+1.215-.079,1.791,.15
 for(const z of [-.84,.84])rearHoles.push(rounded(z+1.215-.084,2.016,.168,.168,.084));
 add('rear-shell','Rear body surround',2.43,2.25,rearAt,rearMap,rounded(0,0,2.43,2.25,.06),rearHoles,'rear');
 add('rear-door','Rear emergency door',.86,1.995,[rearAt[0]+.785,rearAt[1]+.1125],(u,v)=>[4.073,2.6675-v,u-.43],undefined,[rounded(.06,.1225,.74,.75,.075),rounded(.065,1.3575,.73,.34,.06)],'rear');
-add('brow-front','Over-cab cap · front',2.05,.32,[3.7,9.76],(u,v)=>[-3.157,2.86-v,u-1.025],rounded(0,0,2.05,.32,.09),[rounded(.435,.012,1.18,.26,.03)],'front','Projected curved cap; destination display excluded.');
-add('brow-roof','Over-cab cap · top',1.425,2.43,[3.7,10.14],(u,v)=>[-3.085+u,3.065,v-1.215],rounded(0,0,1.425,2.43,.13),[],'top','Projected cap surface; its compound curves need stretch allowances.');
-for(const [side,x] of [[1,.3],[-1,1.85]])add('brow-'+(side===1?'driver':'passenger'),'Over-cab cap · '+(side===1?'driver side':'entry side'),1.425,.64,[x,12.66],sideMap(-3.085,3.025,side*1.25),rounded(0,0,1.425,.64,.13),[],side===1?'hero':'passenger','Projected curved cap side.');
-add('front-header','Front grille surround',1.97,.64,[3.5,12.66],(u,v)=>[-4.065,1.36-v,u-.985],[[0,.5],[.35,.5],[.35,0],[.37,0],[.37,.565],[1.6,.565],[1.6,0],[1.62,0],[1.62,.5],[1.97,.5],[1.97,.64],[0,.64]],[],'front','Painted front surround; grille and lamps excluded.');
+const capLength=CAP.join-CAP.front,capHeight=CAP.top-CAP.bottom,faceHeight=CAP.frontTop-CAP.frontBottom;
+add('brow-front','Over-cab cap · front',CAP.frontWidth,faceHeight,[3.7,9.76],(u,v)=>[CAP.front-.015,CAP.frontTop-v,u-CAP.frontWidth/2],rounded(0,0,CAP.frontWidth,faceHeight,.10),[rounded(.34,.13,1.28,.27,.03)],'front','Projected curved cap; destination display excluded.');
+add('brow-roof','Over-cab cap · top',capLength,2.43,[3.7,10.36],(u,v)=>[CAP.front+u,CAP.top,v-1.215],[[0,.235],[.02,.135],[.10,.045],[.29,0],[capLength,0],[capLength,2.43],[.29,2.43],[.10,2.385],[.02,2.295],[0,2.195]],[],'top','Projected cap surface; its compound curves need stretch allowances.');
+for(const [side,x] of [[1,.3],[-1,1.93]])add('brow-'+(side===1?'driver':'passenger'),'Over-cab cap · '+(side===1?'driver side':'entry side'),capLength,capHeight,[x,12.90],sideMap(CAP.front,CAP.top,side*1.25),[[0,.07],[.10,.02],[.29,0],[capLength,0],[capLength,.385],[1.47,.645],[.29,capHeight],[.10,.680],[.02,.645],[0,.595]],[],side===1?'hero':'passenger','Projected curved cap side.');
+add('front-header','Front grille surround',1.97,.64,[3.6,12.90],(u,v)=>[-4.065,1.36-v,u-.985],[[0,.5],[.35,.5],[.35,0],[.37,0],[.37,.565],[1.6,.565],[1.6,0],[1.62,0],[1.62,.5],[1.97,.5],[1.97,.64],[0,.64]],[],'front','Painted front surround; grille and lamps excluded.');
 // Templates face outward: reflect contours and their world map together so
 // the 2D orientation changes without moving the corresponding 3D highlight.
 function reflect(panel,axis){
@@ -67,6 +69,6 @@ for(const panel of panels){
  if(panel.id==='roof')reflect(panel,'y');
 }
 export const PANELS=panels;
-export const SHEET={width:6.35,height:13.58};
+export const SHEET={width:6.35,height:13.85};
 export function pathData(panel){return [panel.outer,...panel.holes].map(p=>'M'+p.map(([x,y])=>`${x.toFixed(4)},${y.toFixed(4)}`).join('L')+'Z').join('');}
 export function highlightGeometry(panel){const shape=new THREE.Shape(panel.outer.map(p=>new THREE.Vector2(...p)));shape.holes=panel.holes.map(h=>new THREE.Path(h.map(p=>new THREE.Vector2(...p))));const geometry=new THREE.ShapeGeometry(shape);const a=geometry.attributes.position;for(let i=0;i<a.count;i++){const p=panel.map(a.getX(i),a.getY(i));a.setXYZ(i,...p);}geometry.computeVertexNormals();return geometry;}

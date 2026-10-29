@@ -1,5 +1,6 @@
 import * as T from 'three';
-import { loft, surface, labelMaterial } from './sculpt.js';
+import { loft, roundedLoft, surface, labelMaterial } from './sculpt.js';
+import { CAP, ROOF_SECTIONS } from './body-profile.js';
 import { materials } from './materials.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -19,8 +20,7 @@ export function createBus(){
  function cyl(radius,depth,x,y,z,m=chrome){const o=mesh(new T.CylinderGeometry(radius,radius,depth,48),m,x,y,z);o.rotation.x=Math.PI/2;return o;}
  // Full-width upper coach, rounded roof, and the characteristic over-cab brow.
  box(5.58,1.64,2.43,1.12,2.05,0,paint,.13);
- mesh(loft([[-1.74,1.13,2.72,2.985],[-1.57,1.225,2.72,3.035],[.2,1.225,2.72,3.05],[2.9,1.225,2.72,3.05],[3.72,1.205,2.73,3.015],[3.925,1.11,2.77,2.94]],.48),paint);
- mesh(loft([[-3.085,1.025,2.54,2.86],[-3.025,1.15,2.46,2.95],[-2.88,1.22,2.39,3.015],[-2.47,1.225,2.37,3.04],[-1.74,1.225,2.41,3.035],[-1.57,1.225,2.52,3.035]],.45),paint);
+ mesh(roundedLoft(ROOF_SECTIONS,240),paint);
  // Lower side panels have actual wheel openings, not tires hidden in a box.
  for(const side of [-1,1]){
   const s=new T.Shape();s.moveTo(-1.66,.53);s.lineTo(1.42,.53);s.lineTo(1.42,.57);s.absarc(2.02,.57,.60,Math.PI,0,true);s.lineTo(2.62,.53);s.lineTo(3.9,.53);s.lineTo(3.9,1.4);s.lineTo(-1.66,1.4);s.closePath();
@@ -30,7 +30,7 @@ export function createBus(){
   box(5.48,.026,.03,1.12,2.79,side*1.233,paint,.01);
   // Seven sash windows on driver's side, six behind the passenger entrance.
   const centers=side===1?[-1.16,-.42,.32,1.06,1.8,2.54,3.28]:[1.06,1.8,2.54,3.28];
-  for(const x of centers){box(.685,1.04,.048,x,2.11,side*1.231,trim,.085);box(.618,.973,.022,x,2.11,side*1.262,glass,.071);box(.62,.018,.018,x,2.355,side*1.279,chrome,.005);box(.62,.021,.023,x,2.337,side*1.282,trim,.003);}
+  for(const x of centers){box(.685,1.04,.048,x,2.11,side*1.231,trim,.085);box(.618,.973,.022,x,2.11,side*1.262,glass,.071);box(.62,.018,.018,x,2.355,side*1.279,trim,.005);box(.62,.021,.023,x,2.337,side*1.282,trim,.003);}
   for(const x of [-1.5,3.58])box(.095,.048,.025,x,.99,side*1.268,amber,.016);
  }
  box(5.55,.16,2.18,1.1,.6,0,trim); // floor and concealed chassis
@@ -45,15 +45,18 @@ export function createBus(){
   box(.055,.145,.028,-1.85,1.44,side*1.056,trim,.015);
   box(.13,.029,.019,-1.87,1.47,side*1.078,chrome,.006);
   box(.63,.08,.28,-1.99,.43,side*1.12,chrome,.035);box(.5,.025,.19,-1.99,.48,side*1.13,rubber);
-  line([[-2.32,1.55,side*1.04],[-2.37,1.56,side*1.38],[-2.48,1.77,side*1.43]],trim,.024);
-  box(.2,.39,.15,-2.48,1.93,side*1.43,trim,.065);box(.018,.31,.11,-2.369,1.94,side*1.43,chrome,.014);
+  box(.22,.17,.045,-2.35,1.73,side*1.055,trim,.025);
+  line([[-2.32,1.65,side*1.08],[-2.38,1.59,side*1.40],[-2.55,1.67,side*1.49],[-2.55,1.84,side*1.49]],trim,.031);
+  line([[-2.37,1.81,side*1.08],[-2.49,1.88,side*1.39],[-2.55,1.91,side*1.49]],trim,.024);
+  box(.25,.43,.18,-2.55,1.99,side*1.49,trim,.065);box(.018,.35,.135,-2.414,2.0,side*1.49,chrome,.014);
   box(.22,.065,.018,-2.97,1.53,side*1.061,chrome,.007);
  }
- mesh(loft([[-3.965,.88,1.235,1.48],[-3.87,.969,1.20,1.54],[-3.49,1.005,1.22,1.60],[-2.99,1.015,1.28,1.675],[-2.78,.963,1.36,1.69]],.48,56),paint);
+ mesh(roundedLoft([[-3.965,.88,1.235,1.50,.075,.04],[-3.87,.969,1.20,1.55,.09,.045],[-3.49,1.005,1.22,1.615,.10,.045],[-2.99,1.015,1.28,1.685,.09,.045],[-2.78,.963,1.36,1.70,.065,.04]],96),paint);
+ line([[-3.96,1.48,-.85],[-3.99,1.526,-.65],[-4.005,1.535,0],[-3.99,1.526,.65],[-3.96,1.48,.85]],trim,.026);
  for(const side of [-1,1]){
   line([[-3.89,1.492,side*.72],[-3.55,1.583,side*.75],[-3.16,1.654,side*.77],[-2.84,1.68,side*.79]],trim,.004);
   // Broad flared fender lip blends into the pressed cab panel.
-  mesh(surface((u,v)=>{const a=.03+u*(Math.PI-.06),rad=.565+v*.12;return [-2.95+Math.cos(a)*rad,.56+Math.sin(a)*rad,side*(1.017+.055*Math.sin(v*Math.PI))];},64,10),paint).material.side=T.DoubleSide;
+  mesh(surface((u,v)=>{const a=.03+u*(Math.PI-.06),rad=.565+v*.12;return [-2.95+Math.cos(a)*rad,.56+Math.sin(a)*rad,side*(1.02+.08*Math.pow(1-v,.8))];},64,16),paint).material.side=T.DoubleSide;
  }
  box(.13,.64,1.97,-3.88,1.04,0,paint,.045);
  // Windshield is a single raked surface spanning the cab.
@@ -61,6 +64,7 @@ export function createBus(){
  mesh(surface((u,v)=>screen(u,v),48,28),trim);
  mesh(surface((u,v)=>screen(.024+u*.952,.034+v*.932,-.014),48,28),glass);
  box(.71,.12,1.99,-1.99,2.29,0,paint,.05);
+ box(.57,.15,2.04,-1.965,2.345,0,paint,.055);
  for(const z of [-.44,.4]){line([[-2.91,1.685,z-.18],[-2.869,1.74,z],[-2.86,1.755,z+.31]],trim,.011);line([[-2.875,1.752,z-.1],[-2.861,1.763,z+.35]],rubber,.015);}
  box(.17,.035,1.7,-2.83,1.67,0,trim,.012);
  for(let i=0;i<36;i++)box(.1,.01,.013,-2.835,1.69,-.77+i*.044,rubber,.003);
@@ -75,16 +79,18 @@ export function createBus(){
  // Wheels, dual rear tires, steel hubs, circular vents and eight lugs.
  for(const x of [-2.95,2.02])for(const side of [-1,1]){
   const z=side*(x<0?1.005:1.115); cyl(.551,.035,x,.55,z-side*.17,rubber);
-  const tire=mesh(new T.TorusGeometry(.351,.125,20,64),rubber,x,.481,z);tire.scale.z=1.2;
-  if(x>0)mesh(new T.TorusGeometry(.351,.125,16,64),rubber,x,.481,z-side*.25);
+  const tireProfile=[[.285,-.112],[.34,-.132],[.415,-.128],[.463,-.096],[.476,-.065],[.478,.065],[.463,.096],[.415,.128],[.34,.132],[.285,.112]].map(p=>new T.Vector2(...p));
+  const tireGeometry=new T.LatheGeometry(tireProfile,96);tireGeometry.rotateX(Math.PI/2);mesh(tireGeometry,rubber,x,.481,z);
+  if(x>0)mesh(tireGeometry.clone(),rubber,x,.481,z-side*.25);
   cyl(.277,.17,x,.481,z,trim);
   const rimProfile=[[.092,.035],[.11,.049],[.17,.044],[.225,.083],[.249,.105],[.265,.113],[.278,.103],[.281,.088]].map(p=>new T.Vector2(...p));
   const rim=mesh(new T.LatheGeometry(rimProfile.reverse(),72),chrome,x,.481,z);rim.rotation.x=side*Math.PI/2;
   for(const radius of [.272,.252]){const lip=mesh(new T.TorusGeometry(radius,.008,8,72),chrome,x,.481,z+side*.101);}
   cyl(.098,.224,x,.481,z,chrome);const hub=mesh(new T.SphereGeometry(.094,32,16),chrome,x,.481,z+side*.115);hub.scale.z=.55;
   for(let i=0;i<8;i++){const a=i*Math.PI/4;cyl(.033,.012,x+Math.sin(a)*.22,.481+Math.cos(a)*.22,z+side*.098,trim);cyl(.018,.017,x+Math.sin(a)*.127,.481+Math.cos(a)*.127,z+side*.118,chrome);}
-  for(let i=0;i<64;i++){const a=i*Math.PI*2/64;for(const lane of [-1,1]){const t=box(.034,.009,.07,x+Math.sin(a)*.476,.481+Math.cos(a)*.476,z+lane*.052,rubber,.002);t.rotation.z=-a;t.rotation.y=lane*.2;}}
-  for(const radius of [.322,.427])mesh(new T.TorusGeometry(radius,.0028,6,72),rubber,x,.481,z+side*.121);
+  for(const lane of [-.052,-.026,0,.026,.052])mesh(new T.TorusGeometry(.477,.0018,6,96),trim,x,.481,z+lane);
+  for(let i=0;i<96;i++){const a=i*Math.PI*2/96;for(const lane of [-1,1]){const t=box(.011,.003,.025,x+Math.sin(a)*.473,.481+Math.cos(a)*.473,z+lane*.081,rubber,.001);t.rotation.z=-a;t.rotation.y=lane*.28;}}
+  for(const radius of [.322,.427])mesh(new T.TorusGeometry(radius,.0028,6,72),rubber,x,.481,z+side*.132);
   box(.28,.24,.025,x+.48,.34,side*1.07,rubber,.01);
  }
  // Passenger lift doors and destination panel, matched to the walkaround video.
@@ -103,11 +109,11 @@ export function createBus(){
  for(const side of [-1,1]){rearWindow(2.2,side*.825,.55,.91);for(const z of [.75,.98]){const o=cyl(.079,.028,3.985,.91,side*z,red);o.rotation.set(0,0,Math.PI/2);}const o=cyl(.084,.023,3.986,.68,side*.84,light);o.rotation.set(0,0,Math.PI/2);box(.06,.042,.13,3.944,2.75,side*.95,red,.012);}
  box(.05,.037,.14,4.009,1.46,-.34,chrome,.007);
  box(.16,.15,2.5,3.94,.48,0,trim,.03);
- for(const z of [-.32,0,.32]){box(.055,.04,.1,3.96,2.85,z,red,.013);box(.07,.04,.1,-3.09,2.86,z,amber,.014);}
- box(.045,.26,1.18,-3.112,2.718,0,trim,.03);box(.022,.2,1.05,-3.14,2.718,0,glass,.02);
+ for(const z of [-.32,0,.32]){box(.055,.04,.1,3.96,2.85,z,red,.013);box(.045,.04,.07,CAP.front-.015,2.946,z,amber,.014);}
+ box(.045,.27,1.28,CAP.front-.025,2.74,0,trim,.03);box(.022,.21,1.15,CAP.front-.055,2.74,0,glass,.02);
  box(1.06,.17,.85,2.37,3.09,0,paint,.075);box(.7,.028,.65,2.37,3.19,0,trim,.024);
  for(let i=0;i<9;i++)box(.045,.02,.59,2.08+i*.073,3.208,0,paint,.006);
- box(.54,.047,.54,.2,3.055,0,paint,.023);
+ box(.54,.047,.54,.2,CAP.top+.026,0,paint,.023);
  box(.16,.23,.025,2.93,.99,1.262,trim,.025);
 
  // Fine exterior hardware remains readable when inspecting close-up.

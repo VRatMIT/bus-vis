@@ -8,7 +8,8 @@
     "build": "vite build --base=./",
     "preview": "vite preview --host 0.0.0.0 --port 5009",
     "test:design": "node check-retro.mjs && node check-wrap.mjs && node check-design.mjs",
-    "test:panels": "node check-panels.mjs"
+    "test:panels": "node check-panels.mjs",
+    "test:geometry": "node check-geometry.mjs"
   },
   "dependencies": {
     "three": "^0.180.0",
