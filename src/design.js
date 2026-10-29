@@ -54,7 +54,7 @@ async function createStudio(initial,createPreview){
  const panel=()=>PANELS.find(p=>p.id===project.panel),layers=()=>project.layers,current=()=>layers().find(l=>l.id===selected),asset=id=>project.assets.find(a=>a.id===id);
  const visiblePanels=()=>viewPlacements(project.view),bounds=()=>viewBounds(project.view);
  const panelCenter=()=>{const p=placementFor(project.panel);return {x:p.x+p.w/2,y:p.y+p.h/2};};
- function focusPreview(){preview.focus({...panel(),view:project.view==='wrap'?panel().view:WRAP_VIEWS.find(v=>v.id===project.view).view},visiblePanels().map(p=>p.panel));}
+ function focusPreview(){preview.focus({...panel(),view:project.view==='wrap'?panel().view:WRAP_VIEWS.find(v=>v.id===project.view).view});}
  function toast(message){$('toast').textContent=message;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3200);}
  function snapshot(){return {...project,assets:project.assets.slice(),layers:clone(project.layers)};}
  function commit(){history.push(snapshot());if(history.length>45)history.shift();future=[];updateHistory();}

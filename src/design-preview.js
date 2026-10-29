@@ -60,19 +60,14 @@ export function createDesignPreview(host){
  scene.add(new T.HemisphereLight(0xe7f4ff,0x7e968a,2));const light=new T.DirectionalLight(0xfff6e8,2);light.position.set(-4,9,5);scene.add(light);
  const bus=createBus();scene.add(bus);const floor=new T.Mesh(new T.PlaneGeometry(80,80),new T.MeshStandardMaterial({color:0x172122,roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.014;scene.add(floor);
  const grid=new T.GridHelper(30,30,0x36504a,0x263a35);grid.position.y=-.005;grid.material.transparent=true;grid.material.opacity=.4;scene.add(grid);
- const decals=new Map(),geometries=new Map();let active=true,outline=null;
+ const decals=new Map(),geometries=new Map();let active=true;
  function fit(){const distance=Math.max(11,14/Math.max(.25,camera.aspect));camera.position.sub(controls.target).normalize().multiplyScalar(distance).add(controls.target);controls.update();}
  const resize=()=>{const {width,height}=host.getBoundingClientRect();if(!width||!height)return;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();fit();};
  const observer=new ResizeObserver(resize);observer.observe(host);resize();
  renderer.setAnimationLoop(()=>{if(!active||document.hidden)return;controls.update();renderer.render(scene,camera);});
  return {
   scene,camera,renderer,decals,
-  focus(panel,connected=[panel]){camera.position.set(...views[panel.view]);controls.target.set(0,1.5,0);fit();if(outline){scene.remove(outline);outline.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
-   outline=new T.Group();outline.name='Connected panel outlines';
-   for(const p of connected){let geometry=geometries.get(p.id);if(!geometry){geometry=surfaceGeometry(p,bus);geometries.set(p.id,geometry);}
-    const line=new T.LineSegments(new T.EdgesGeometry(geometry,60),new T.LineBasicMaterial({color:p.id===panel.id?0xc4f7a0:0x88b4a3,transparent:true,opacity:p.id===panel.id?.6:.24,depthTest:true}));line.renderOrder=4;outline.add(line);
-   }scene.add(outline);
-  },
+  focus(panel){camera.position.set(...views[panel.view]);controls.target.set(0,1.5,0);fit();},
   update(panel,canvas){
    let mesh=decals.get(panel.id);
    if(!mesh){
